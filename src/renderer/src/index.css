@@ -1,5 +1,7 @@
 @import 'tailwindcss';
 
+/* Light theme. Dark overrides the same names below, so components never
+   need a "dark:" variant - bg-surface, text-ink and friends just follow. */
 @theme {
   --color-bg: #f6f3ee;
   --color-surface: #ffffff;
@@ -14,12 +16,35 @@
   --color-go-soft: #dcfce7;
   --color-maybe: #a16207;
   --color-maybe-soft: #fef3c7;
+  /* Text on a filled accent/go/maybe button. */
+  --color-on-bright: #ffffff;
 
   --font-sans: 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
 }
 
 :root {
   color-scheme: light;
+}
+
+/* Settings writes data-theme on <html> (see lib/useSettings.tsx). The colours
+   stay warm: a dark brown-grey rather than Discord's blue-grey. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-bg: #171512;
+  --color-surface: #201d18;
+  --color-sunken: #292520;
+  --color-line: #383329;
+  --color-ink: #f1ece3;
+  --color-muted: #a8a094;
+  --color-accent: #fb923c;
+  --color-accent-strong: #fdba74;
+  --color-accent-soft: #3a2a17;
+  --color-go: #4ade80;
+  --color-go-soft: #17311f;
+  --color-maybe: #fbbf24;
+  --color-maybe-soft: #372a10;
+  /* The fills are bright in dark mode, so their text goes dark. */
+  --color-on-bright: #1b1710;
 }
 
 body {

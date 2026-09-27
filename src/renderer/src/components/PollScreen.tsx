@@ -1,7 +1,7 @@
 import { nameList, plural } from '../lib/names'
 import { profileOf, usePeople } from '../lib/people'
 import { isArchived, notAnswered, summarizeTimes, type TimeSummary } from '../lib/sessions'
-import { formatDuration, formatTimeRange, systemTimeZone } from '../lib/time'
+import { formatDuration, formatTimeRange, getDisplayTimeZone } from '../lib/time'
 import type { Answer, ChatMessage, JoinRequest, Poll, PollResponse } from '../types'
 import { AvatarStack } from './Avatar'
 import { ChatPanel } from './ChatPanel'
@@ -111,7 +111,7 @@ export function PollScreen({
             onRequestJoin={onRequestJoin}
             onDecide={onDecide}
           />
-          <p className="mt-6 text-xs text-muted">Times shown in {systemTimeZone}</p>
+          <p className="mt-6 text-xs text-muted">Times shown in {getDisplayTimeZone()} · change it in Settings</p>
         </div>
       </main>
 
@@ -161,7 +161,7 @@ function TimeRow({ summary, viewerId, canAnswer, now, onAnswer }: TimeRowProps) 
         <span className="font-semibold">{formatTimeRange(summary.time.startsAt, summary.time.endsAt, now)}</span>
         <span className="ml-auto shrink-0">
           {summary.isSession ? (
-            <span className="rounded-full bg-go px-2.5 py-0.5 text-xs font-semibold text-white">On ✓</span>
+            <span className="rounded-full bg-go px-2.5 py-0.5 text-xs font-semibold text-on-bright">On ✓</span>
           ) : (
             <span className="text-xs font-medium text-muted">needs {summary.needed} more</span>
           )}
@@ -189,8 +189,8 @@ function TimeRow({ summary, viewerId, canAnswer, now, onAnswer }: TimeRowProps) 
 }
 
 const TONES = {
-  go: { active: 'border-go bg-go text-white', idle: 'border-line text-go hover:bg-go-soft' },
-  maybe: { active: 'border-maybe bg-maybe text-white', idle: 'border-line text-maybe hover:bg-maybe-soft' }
+  go: { active: 'border-go bg-go text-on-bright', idle: 'border-line text-go hover:bg-go-soft' },
+  maybe: { active: 'border-maybe bg-maybe text-on-bright', idle: 'border-line text-maybe hover:bg-maybe-soft' }
 }
 
 interface AnswerButtonProps {

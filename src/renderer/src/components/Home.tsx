@@ -12,15 +12,23 @@ interface Props {
   responses: PollResponse[]
   /** Unread notification count per poll, to flag polls with news. */
   unreadByPoll: Record<string, number>
+  /** Chat messages you haven't seen, per poll. */
+  unreadChatByPoll: Record<string, number>
   viewerId: string
   now: Date
   onOpen: (pollId: string) => void
 }
 
-export function Home({ polls, responses, unreadByPoll, viewerId, now, onOpen }: Props) {
+export function Home({ polls, responses, unreadByPoll, unreadChatByPoll, viewerId, now, onOpen }: Props) {
   const people = usePeople()
-  const updatesBadge = (pollId: string): ReactNode =>
-    unreadByPoll[pollId] ? <Badge tone="accent">{unreadByPoll[pollId]} new</Badge> : undefined
+  /** `lead` first (New, Answered), then whatever is unread in that poll. */
+  const badges = (pollId: string, lead?: ReactNode): ReactNode => (
+    <>
+      {lead}
+      {unreadByPoll[pollId] ? <Badge tone="accent">{unreadByPoll[pollId]} new</Badge> : null}
+      {unreadChatByPoll[pollId] ? <Badge tone="chat">💬 {unreadChatByPoll[pollId]}</Badge> : null}
+    </>
+  )
 
   const firstStart = (poll: Poll): number => poll.times[0].startsAt.getTime()
   const open = polls.filter((p) => !isArchived(p, now)).sort((a, b) => firstStart(a) - firstStart(b))
@@ -59,9 +67,14 @@ export function Home({ polls, responses, unreadByPoll, viewerId, now, onOpen }: 
                 now={now}
                 onOpen={onOpen}
                 subtitle={`from ${profileOf(people, poll.creatorId).displayName}`}
-                badge={
-                  isNew ? <Badge tone="accent">New</Badge> : (updatesBadge(poll.id) ?? <Badge tone="muted">Answered</Badge>)
-                }
+                badge={badges(
+                  poll.id,
+                  isNew ? (
+                    <Badge tone="accent">New</Badge>
+                  ) : unreadByPoll[poll.id] ? undefined : (
+                    <Badge tone="muted">Answered</Badge>
+                  )
+                )}
                 action={isNew ? 'Respond' : 'View'}
               />
             ))
@@ -111,7 +124,7 @@ export function Home({ polls, responses, unreadByPoll, viewerId, now, onOpen }: 
                   now={now}
                   onOpen={onOpen}
                   subtitle={`${poll.inviteeIds.length} invited, ${answered} answered`}
-                  badge={updatesBadge(poll.id)}
+                  badge={badges(poll.id)}
                   action="Open"
                 />
               )
@@ -199,7 +212,7 @@ function Section({ title, note, children }: { title: string; note?: string; chil
       <div className="mb-3 flex items-center gap-2">
         <h2 className="text-lg font-bold tracking-tight">{title}</h2>
         {note && (
-          <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-semibold text-white">{note}</span>
+          <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-semibold text-on-bright">{note}</span>
         )}
       </div>
       <div className="space-y-2">{children}</div>
@@ -213,11 +226,15 @@ function Empty({ children }: { children: ReactNode }) {
   )
 }
 
-function Badge({ tone, children }: { tone: 'accent' | 'muted'; children: ReactNode }) {
+const BADGE_TONES = {
+  accent: 'bg-accent text-on-bright',
+  muted: 'bg-sunken text-muted',
+  chat: 'bg-accent-soft text-accent'
+}
+
+function Badge({ tone, children }: { tone: keyof typeof BADGE_TONES; children: ReactNode }) {
   return (
-    <span
-      className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${tone === 'accent' ? 'bg-accent text-white' : 'bg-sunken text-muted'}`}
-    >
+    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${BADGE_TONES[tone]}`}>
       {children}
     </span>
   )

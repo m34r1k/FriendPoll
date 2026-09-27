@@ -12,10 +12,19 @@ import { explainError } from './errors'
 import { toProfile, type ProfileRow } from './profiles'
 import { supabase } from './supabase'
 
+/** Just enough of a chat message to badge the polls with unseen ones. */
+export interface RecentMessage {
+  pollId: string
+  authorId: string
+  createdAt: Date
+}
+
 export interface PollData {
   polls: Poll[]
   responses: PollResponse[]
   joinRequests: JoinRequest[]
+  /** The newest messages across every poll the viewer is in. */
+  recentMessages: RecentMessage[]
   /** Newest first. */
   notifications: AppNotification[]
   profiles: Record<string, Profile>
@@ -58,6 +67,11 @@ interface NotificationRow {
   join_request_id: string | null
   created_at: string
   read_at: string | null
+}
+interface MessageRow {
+  poll_id: string
+  author_id: string
+  created_at: string
 }
 interface FriendRow {
   user_id: string
@@ -110,7 +124,7 @@ export function usePollData(userId: string, onNotification?: (notification: AppN
   notifyRef.current = onNotification
 
   const refresh = useCallback(async (): Promise<void> => {
-    const [polls, responses, requests, notifications, profiles, friends] = await Promise.all([
+    const [polls, responses, requests, notifications, profiles, friends, messages] = await Promise.all([
       supabase
         .from('polls')
         .select('id, creator_id, title, min_people, closes_at, created_at, poll_times(id, starts_at, ends_at), poll_invitees(user_id)'),
@@ -118,9 +132,14 @@ export function usePollData(userId: string, onNotification?: (notification: AppN
       supabase.from('join_requests').select('id, poll_id, requested_by, user_id, status, created_at'),
       supabase.from('notifications').select('*').order('created_at', { ascending: false }).limit(200),
       supabase.from('profiles').select('id, username, display_name'),
-      supabase.rpc('list_friends')
+      supabase.rpc('list_friends'),
+      supabase
+        .from('poll_messages')
+        .select('poll_id, author_id, created_at')
+        .order('created_at', { ascending: false })
+        .limit(300)
     ])
-    for (const result of [polls, responses, requests, notifications, profiles, friends]) {
+    for (const result of [polls, responses, requests, notifications, profiles, friends, messages]) {
       if (result.error) {
         setError(explainError(result.error))
         return
@@ -148,6 +167,11 @@ export function usePollData(userId: string, onNotification?: (notification: AppN
         userId: r.user_id,
         status: r.status,
         createdAt: new Date(r.created_at)
+      })),
+      recentMessages: ((messages.data ?? []) as unknown as MessageRow[]).map((m) => ({
+        pollId: m.poll_id,
+        authorId: m.author_id,
+        createdAt: new Date(m.created_at)
       })),
       notifications: ((notifications.data ?? []) as unknown as NotificationRow[]).map(toNotification),
       profiles: profileMap,
@@ -184,6 +208,9 @@ export function usePollData(userId: string, onNotification?: (notification: AppN
       )
       .on('postgres_changes', { event: '*', schema: 'public', table: 'poll_responses' }, soon)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'poll_invitees' }, soon)
+      // Not for the open poll's chat (useChat does that) - for the unread
+      // badges on polls you aren't looking at.
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'poll_messages' }, soon)
       .subscribe()
 
     // Safety net in case a live update is missed (sleep, network drop).

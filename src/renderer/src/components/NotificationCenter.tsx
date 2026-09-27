@@ -1,14 +1,17 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { rankForYou } from '../lib/forYou'
 import { profileOf, usePeople, type People } from '../lib/people'
 import { isFull } from '../lib/sessions'
 import { formatAgo, formatSlot } from '../lib/time'
-import type { AppNotification, JoinRequest, Poll } from '../types'
+import type { AppNotification, JoinRequest, Poll, PollResponse } from '../types'
 import { Avatar } from './Avatar'
 
 interface Props {
   /** The viewer's notifications, newest first. */
   notifications: AppNotification[]
   polls: Poll[]
+  /** Answers so far, for ranking "For you". */
+  responses: PollResponse[]
   joinRequests: JoinRequest[]
   viewerId: string
   now: Date
@@ -21,6 +24,7 @@ interface Props {
 export function NotificationCenter({
   notifications,
   polls,
+  responses,
   joinRequests,
   viewerId,
   now,
@@ -29,7 +33,7 @@ export function NotificationCenter({
   onMarkAllRead,
   onClose
 }: Props) {
-  const [tab, setTab] = useState<'all' | 'unread'>('all')
+  const [tab, setTab] = useState<'all' | 'unread' | 'foryou'>('all')
   const panelRef = useRef<HTMLDivElement>(null)
   const people = usePeople()
 
@@ -51,7 +55,14 @@ export function NotificationCenter({
   }, [onClose])
 
   const unreadCount = notifications.filter((n) => !n.readAt).length
-  const shown = tab === 'unread' ? notifications.filter((n) => !n.readAt) : notifications
+  const ranked = rankForYou({ notifications, polls, responses, joinRequests, viewerId, now, people })
+  const reasons = new Map(ranked.map((r) => [r.notification.id, r.reason]))
+  const shown =
+    tab === 'unread'
+      ? notifications.filter((n) => !n.readAt)
+      : tab === 'foryou'
+        ? ranked.map((r) => r.notification)
+        : notifications
 
   return (
     <div
@@ -79,20 +90,25 @@ export function NotificationCenter({
         <TabButton active={tab === 'unread'} onClick={() => setTab('unread')}>
           Unread{unreadCount > 0 ? ` (${unreadCount})` : ''}
         </TabButton>
-        <button
-          type="button"
-          disabled
-          title="AI puts what you're most likely to care about first - coming in Phase 3b"
-          className="ml-auto rounded-md px-2.5 py-1 text-xs font-medium text-muted opacity-60"
-        >
-          ✨ For you
-        </button>
+        <span className="ml-auto">
+          <TabButton
+            active={tab === 'foryou'}
+            onClick={() => setTab('foryou')}
+            title="What most likely needs you, worked out from your own answers. AI reasons come in Phase 3b."
+          >
+            ✨ For you
+          </TabButton>
+        </span>
       </div>
 
       <ul className="flex-1 divide-y divide-line overflow-y-auto">
         {shown.length === 0 && (
           <li className="px-4 py-10 text-center text-sm text-muted">
-            {tab === 'unread' ? "You're all caught up." : 'No notifications yet.'}
+            {tab === 'unread'
+              ? "You're all caught up."
+              : tab === 'foryou'
+                ? 'Nothing needs you right now.'
+                : 'No notifications yet.'}
           </li>
         )}
         {shown.map((n) => {
@@ -106,7 +122,7 @@ export function NotificationCenter({
                 className="flex w-full gap-3 px-4 py-3 text-left hover:bg-sunken"
               >
                 {n.kind === 'session_on' ? (
-                  <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-go text-sm font-bold text-white">
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-go text-sm font-bold text-on-bright">
                     ✓
                   </span>
                 ) : (
@@ -114,6 +130,9 @@ export function NotificationCenter({
                 )}
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm leading-snug">{describe(n, poll, viewerId, now, people)}</span>
+                  {tab === 'foryou' && reasons.get(n.id) && (
+                    <span className="mt-1 block text-xs font-semibold text-accent">{reasons.get(n.id)}</span>
+                  )}
                   <span className="mt-0.5 block text-xs text-muted">{formatAgo(n.createdAt, now)}</span>
                 </span>
                 {!n.readAt && <span aria-label="Unread" className="mt-1.5 size-2 shrink-0 rounded-full bg-accent" />}
@@ -127,7 +146,7 @@ export function NotificationCenter({
                         type="button"
                         disabled={isFull(poll)}
                         onClick={() => onDecide(request.id, true)}
-                        className="rounded-lg bg-go px-3 py-1 text-xs font-semibold text-white disabled:opacity-40"
+                        className="rounded-lg bg-go px-3 py-1 text-xs font-semibold text-on-bright disabled:opacity-40"
                       >
                         Allow
                       </button>
@@ -210,11 +229,19 @@ function describe(
   }
 }
 
-function TabButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: ReactNode }) {
+interface TabButtonProps {
+  active: boolean
+  onClick: () => void
+  title?: string
+  children: ReactNode
+}
+
+function TabButton({ active, onClick, title, children }: TabButtonProps) {
   return (
     <button
       type="button"
       aria-pressed={active}
+      title={title}
       onClick={onClick}
       className={`rounded-md px-2.5 py-1 text-xs font-semibold ${active ? 'bg-sunken text-ink' : 'text-muted hover:text-ink'}`}
     >

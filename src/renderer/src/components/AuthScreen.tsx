@@ -145,7 +145,7 @@ export function AuthScreen({ onOpenDemo }: { onOpenDemo: () => void }) {
       <div className="flex min-h-full items-center justify-center p-6">
         <div className="w-full max-w-sm">
           <div className="mb-6 flex items-center justify-center gap-2 text-xl font-bold tracking-tight">
-            <span className="flex size-9 items-center justify-center rounded-lg bg-accent text-sm text-white">FP</span>
+            <span className="flex size-9 items-center justify-center rounded-lg bg-accent text-sm text-on-bright">FP</span>
             FriendPoll
           </div>
 
@@ -264,7 +264,7 @@ export function AuthScreen({ onOpenDemo }: { onOpenDemo: () => void }) {
               <button
                 type="submit"
                 disabled={busy || !canSubmit()}
-                className="w-full rounded-lg bg-accent py-2.5 text-sm font-semibold text-white hover:bg-accent-strong disabled:opacity-50"
+                className="w-full rounded-lg bg-accent py-2.5 text-sm font-semibold text-on-bright hover:bg-accent-strong disabled:opacity-50"
               >
                 {busy ? 'Please wait…' : submitLabel}
               </button>

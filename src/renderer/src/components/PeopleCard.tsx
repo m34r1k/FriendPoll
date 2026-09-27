@@ -84,7 +84,7 @@ export function PeopleCard({ poll, joinRequests, viewerId, archived, onInviteMor
                 <button
                   type="button"
                   onClick={() => pick(friend.id)}
-                  className="rounded-md bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent hover:bg-accent hover:text-white"
+                  className="rounded-md bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent hover:bg-accent hover:text-on-bright"
                 >
                   {isCreator ? 'Invite' : `Ask ${creatorName}`}
                 </button>
@@ -108,7 +108,7 @@ export function PeopleCard({ poll, joinRequests, viewerId, archived, onInviteMor
                 type="button"
                 disabled={full}
                 onClick={() => onDecide(request.id, true)}
-                className="rounded-lg bg-go px-3 py-1 text-xs font-semibold text-white disabled:opacity-40"
+                className="rounded-lg bg-go px-3 py-1 text-xs font-semibold text-on-bright disabled:opacity-40"
               >
                 Allow
               </button>

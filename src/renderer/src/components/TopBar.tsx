@@ -19,6 +19,8 @@ interface Props {
   leading?: ReactNode
   /** Extra controls after the avatar. */
   trailing?: ReactNode
+  /** Leave out to hide the gear (nothing to open). */
+  onOpenSettings?: () => void
 }
 
 export function TopBar({
@@ -32,13 +34,14 @@ export function TopBar({
   onSwitchViewer,
   onExitDemo,
   leading,
-  trailing
+  trailing,
+  onOpenSettings
 }: Props) {
   const people = usePeople()
   return (
     <header className="flex h-14 shrink-0 items-center gap-3 border-b border-line bg-surface px-5">
       <button type="button" onClick={onHome} className="flex items-center gap-2 font-bold tracking-tight">
-        <span className="flex size-8 items-center justify-center rounded-lg bg-accent text-sm text-white">FP</span>
+        <span className="flex size-8 items-center justify-center rounded-lg bg-accent text-sm text-on-bright">FP</span>
         FriendPoll
       </button>
 
@@ -71,7 +74,7 @@ export function TopBar({
         <button
           type="button"
           onClick={onNewPoll}
-          className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-accent-strong"
+          className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-bright shadow-sm hover:bg-accent-strong"
         >
           + New poll
         </button>
@@ -97,11 +100,34 @@ export function TopBar({
             <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
           </svg>
           {unreadCount > 0 && (
-            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-white">
+            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-on-bright">
               {unreadCount}
             </span>
           )}
         </button>
+        {onOpenSettings && (
+          <button
+            type="button"
+            aria-label="Settings"
+            title="Settings"
+            onClick={onOpenSettings}
+            className="flex size-9 items-center justify-center rounded-lg text-ink hover:bg-sunken"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              className="size-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.82 1.17V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 7.26 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 3 15a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 7.26a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 3a2 2 0 0 1 4 0v.09A1.65 1.65 0 0 0 16.74 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 21 9a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+          </button>
+        )}
         <Avatar profile={profileOf(people, viewerId)} size="sm" />
         {trailing}
       </div>

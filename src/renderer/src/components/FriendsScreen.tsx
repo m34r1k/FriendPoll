@@ -104,7 +104,7 @@ export function FriendsScreen({ onChanged }: { onChanged?: () => void }) {
         <button
           type="submit"
           disabled={busy || username.trim() === ''}
-          className="rounded-lg bg-accent px-4 text-sm font-semibold text-white hover:bg-accent-strong disabled:opacity-50"
+          className="rounded-lg bg-accent px-4 text-sm font-semibold text-on-bright hover:bg-accent-strong disabled:opacity-50"
         >
           Send request
         </button>
@@ -214,8 +214,8 @@ function PersonRow({ row, note, children }: { row: FriendRow; note?: string; chi
 
 const TONES = {
   plain: 'border border-line text-ink hover:bg-sunken',
-  go: 'bg-go text-white hover:opacity-90',
-  danger: 'bg-accent text-white hover:bg-accent-strong'
+  go: 'bg-go text-on-bright hover:opacity-90',
+  danger: 'bg-accent text-on-bright hover:bg-accent-strong'
 }
 
 function SmallButton({

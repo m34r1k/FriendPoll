@@ -34,8 +34,18 @@ single winning time. The creator decides how many people are needed (5 for a
 - **Desktop notifications** — Windows tells you when you are invited, when
   someone answers your poll, and when a time turns on. Clicking one opens that
   poll.
-- **Time zones** — times are stored in UTC and always shown in each person's own
-  time zone.
+- **Stays in the tray** — closing the window leaves FriendPoll by the clock, so
+  invites still reach you. Quit from its menu, or turn that off in Settings.
+- **Unread chat badges** — Home marks the polls whose chat has messages you
+  haven't read.
+- **"For you"** — a tab in the notification centre that puts what most likely
+  needs you first, with the reason: an invite you haven't answered, a request
+  waiting on you, a time one Yes short. Plain code, no AI - Phase 3b adds
+  Gemini on top.
+- **Light and dark** — matches Windows, or pick one in Settings.
+- **Time zones** — times are stored in UTC and shown in your computer's zone,
+  or another one you choose in Settings. Times you enter follow that clock too,
+  so a poll made while travelling still means what you meant.
 - **Demo mode** — a button on the sign-in screen opens the whole app with fake
   data, no account needed.
 
@@ -48,7 +58,7 @@ single winning time. The creator decides how many people are needed (5 for a
 | 3 | Chat inside each poll | Done |
 | 3b | AI helpers (poll from a sentence, catch me up, "for you") | Not started |
 | 4 | Desktop notifications, installer | Done |
-| 4b | Tray, settings, dark mode, unread chat badges | Not started |
+| 4b | Tray, settings, dark mode, unread chat badges, "For you" | Done |
 
 `PLAN.txt` holds the full design: the data model, the rules, and what each phase
 covers.

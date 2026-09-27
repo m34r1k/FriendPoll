@@ -441,17 +441,26 @@ Phase 3b - AI features (Gemini)
   (each person turns it on), built on top of the Phase 4 plain-code ranking
   if that exists by then.
 
-Phase 4 - Polish                                     <-- PART DONE 2026-09-27
-  Done: Windows desktop notifications for every notification-centre event,
-  and clicking one opens that poll; the window remembers its size and
-  position; only one copy can run at a time; app icon; packaging to an
-  installer with electron-builder (npm run dist).
-  Still to do (4b): system tray, settings screen with time zone override,
-  unread chat badges, plain-code "For you" ranking, dark mode.
-  Windows desktop notifications for the same events as the notification
-  center; clicking one opens the poll. Unread chat badges. Plain-code "For
-  you" ranking. Settings (time zone override). System tray. Remember window
-  size. Dark mode. Package to a .exe installer.
+Phase 4 - Polish                                          <-- DONE 2026-09-27
+  Windows desktop notifications for every notification-centre event, and
+  clicking one opens that poll; the window remembers its size and position;
+  only one copy can run at a time; app icon; packaging to an installer with
+  electron-builder (npm run dist).
+
+Phase 4b - Polish, part two                               <-- DONE 2026-09-27
+  System tray: closing the window hides the app there so notifications keep
+  arriving, and the tooltip carries the unread count. Settings screen (per
+  computer, in local storage): theme, time zone override, notifications on or
+  off, and whether to keep running in the tray. Dark mode - the same warm
+  colours turned down, following Windows unless told otherwise. Unread chat
+  badges on Home. Plain-code "For you" tab in the notification centre: ranks
+  by what needs an answer, what is one Yes short, what starts soonest and who
+  you usually say Yes to, and shows the reason in words.
+
+  The time zone override moves the clock everywhere, including the times you
+  type into a new poll - entering "8 PM" while set to Honolulu means 8 PM
+  there. Its awkward cases are covered by tests (the hour the clocks skip in
+  spring, half-hour zones, the date box rolling over at midnight).
 
 Phase 5 - Later / maybe
   Edit or cancel a poll's times

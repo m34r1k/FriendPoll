@@ -1,11 +1,12 @@
 import type { Session } from '@supabase/supabase-js'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { FriendsPanel } from './components/FriendsPanel'
 import { FriendsScreen } from './components/FriendsScreen'
 import { Home } from './components/Home'
 import { NewPollDialog } from './components/NewPollDialog'
 import { NotificationCenter } from './components/NotificationCenter'
 import { PollScreen } from './components/PollScreen'
+import { SettingsScreen } from './components/SettingsScreen'
 import { TopBar } from './components/TopBar'
 import { notificationText, showDesktopNotification } from './lib/desktopNotifications'
 import { explainError } from './lib/errors'
@@ -13,11 +14,17 @@ import { PeopleProvider, profileOf } from './lib/people'
 import { isInPoll } from './lib/sessions'
 import { supabase } from './lib/supabase'
 import { useChat } from './lib/useChat'
+import { unreadChat, useChatSeen } from './lib/useChatSeen'
 import { useNow } from './lib/useNow'
 import { usePollData, type PollData } from './lib/usePollData'
+import { useSettings } from './lib/useSettings'
 import type { Answer, AppNotification, PollDraft } from './types'
 
-type Screen = { name: 'home' } | { name: 'poll'; pollId: string } | { name: 'friends' }
+type Screen =
+  | { name: 'home' }
+  | { name: 'poll'; pollId: string }
+  | { name: 'friends' }
+  | { name: 'settings' }
 type RpcResult = PromiseLike<{ error: { message: string; code?: string } | null }>
 
 interface Props {
@@ -29,13 +36,17 @@ interface Props {
 export function RealApp({ session, onOpenDemo }: Props) {
   const me = session.user.id
   const now = useNow()
+  const { settings } = useSettings()
   // Refs, so the live-update handler always sees the latest values without
   // resubscribing every render.
   const dataRef = useRef<PollData | null>(null)
   const openPollRef = useRef<(pollId: string) => void>(() => {})
+  const notificationsOn = useRef(settings.desktopNotifications)
+  notificationsOn.current = settings.desktopNotifications
 
   /** Something happened while the app wasn't in front: tell Windows. */
   const handleNotification = useCallback((notification: AppNotification): void => {
+    if (!notificationsOn.current) return
     const current = dataRef.current
     const people = { profiles: current?.profiles ?? {}, friends: current?.friends ?? [] }
     const poll = current?.polls.find((p) => p.id === notification.pollId)
@@ -54,6 +65,22 @@ export function RealApp({ session, onOpenDemo }: Props) {
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  const { seen: chatSeen, markSeen } = useChatSeen(me)
+
+  // Counted here rather than below the loading screen, so the tray icon can be
+  // told about it whether or not the polls have arrived yet.
+  const unreadCount = data?.notifications.filter((n) => !n.readAt).length ?? 0
+  const unreadChatByPoll = data ? unreadChat(data.recentMessages, chatSeen, me) : {}
+  const unreadChatCount = Object.values(unreadChatByPoll).reduce((sum, count) => sum + count, 0)
+
+  useEffect(() => {
+    void window.desktop?.setUnread(unreadCount + unreadChatCount)
+  }, [unreadCount, unreadChatCount])
+
+  // Sitting on a poll's screen counts as having read its chat.
+  useEffect(() => {
+    if (screen.name === 'poll') markSeen(screen.pollId)
+  }, [screen, chat.messages, markSeen])
 
   const signOut = (): void => void supabase.auth.signOut()
 
@@ -69,7 +96,7 @@ export function RealApp({ session, onOpenDemo }: Props) {
               <button
                 type="button"
                 onClick={() => void refresh()}
-                className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent-strong"
+                className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-bright hover:bg-accent-strong"
               >
                 Try again
               </button>
@@ -93,7 +120,6 @@ export function RealApp({ session, onOpenDemo }: Props) {
   const meProfile = profileOf(people, me)
   const openPoll =
     screen.name === 'poll' ? data.polls.find((p) => p.id === screen.pollId && isInPoll(p, me)) : undefined
-  const unreadCount = data.notifications.filter((n) => !n.readAt).length
   const unreadByPoll: Record<string, number> = {}
   for (const n of data.notifications) {
     if (!n.readAt) unreadByPoll[n.pollId] = (unreadByPoll[n.pollId] ?? 0) + 1
@@ -178,6 +204,7 @@ export function RealApp({ session, onOpenDemo }: Props) {
           onToggleNotifications={() => setNotificationsOpen((open) => !open)}
           onHome={() => setScreen({ name: 'home' })}
           onNewPoll={() => openNewPoll([])}
+          onOpenSettings={() => setScreen({ name: 'settings' })}
           leading={
             <>
               <button type="button" onClick={onOpenDemo} className={headerButton}>
@@ -229,7 +256,9 @@ export function RealApp({ session, onOpenDemo }: Props) {
         )}
 
         <div className="flex min-h-0 flex-1">
-          {screen.name === 'friends' ? (
+          {screen.name === 'settings' ? (
+            <SettingsScreen onBack={() => setScreen({ name: 'home' })} />
+          ) : screen.name === 'friends' ? (
             <main className="min-w-0 flex-1 overflow-y-auto">
               <div className="mx-auto max-w-2xl px-6 py-6">
                 <button type="button" onClick={() => setScreen({ name: 'home' })} className={headerButton}>
@@ -271,6 +300,7 @@ export function RealApp({ session, onOpenDemo }: Props) {
                 polls={data.polls}
                 responses={data.responses}
                 unreadByPoll={unreadByPoll}
+                unreadChatByPoll={unreadChatByPoll}
                 viewerId={me}
                 now={now}
                 onOpen={openPollScreen}
@@ -284,6 +314,7 @@ export function RealApp({ session, onOpenDemo }: Props) {
           <NotificationCenter
             notifications={data.notifications}
             polls={data.polls}
+            responses={data.responses}
             joinRequests={data.joinRequests}
             viewerId={me}
             now={now}

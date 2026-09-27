@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { usePeople } from '../lib/people'
 import { nameList, plural } from '../lib/names'
 import { MAX_PEOPLE_PER_POLL } from '../lib/sessions'
-import { formatSlot, toDateInputValue } from '../lib/time'
+import { formatSlot, fromZonedParts, toDateInputValue, zonedDayAt, zonedWeekday } from '../lib/time'
 import type { PollDraft } from '../types'
 import { Avatar } from './Avatar'
 
@@ -21,18 +21,13 @@ interface Props {
   submitError?: string | null
 }
 
-/** `hour`:00 on the day `days` from today. */
-function dayAt(days: number, hour: number): Date {
-  const date = new Date()
-  date.setDate(date.getDate() + days)
-  date.setHours(hour, 0, 0, 0)
-  return date
-}
+// Times are built on the clock the app is showing, which settings can move
+// away from this computer's own zone.
 
 /** Next Saturday (never today) at `hour`:00. */
 function nextSaturdayAt(hour: number): Date {
-  const daysAhead = (6 - new Date().getDay() + 7) % 7 || 7
-  return dayAt(daysAhead, hour)
+  const daysAhead = (6 - zonedWeekday(new Date()) + 7) % 7 || 7
+  return zonedDayAt(daysAhead, hour)
 }
 
 export function NewPollDialog({
@@ -66,10 +61,10 @@ export function NewPollDialog({
   const maxPeople = Math.max(2, inviteeIds.length + 1)
   const neededPeople = Math.min(minPeople, maxPeople)
 
-  const quickPicks = [dayAt(0, 20), dayAt(0, 22), dayAt(1, 20), nextSaturdayAt(14)].filter(
+  const quickPicks = [zonedDayAt(0, 20), zonedDayAt(0, 22), zonedDayAt(1, 20), nextSaturdayAt(14)].filter(
     (d) => d.getTime() > now.getTime()
   )
-  const typedTime = new Date(`${date}T${clock}`)
+  const typedTime = fromZonedParts(date, clock)
   const typedTimeValid = !Number.isNaN(typedTime.getTime())
   const typedTimePassed = typedTimeValid && typedTime.getTime() <= now.getTime()
 
@@ -106,7 +101,7 @@ export function NewPollDialog({
 
   return (
     <div
-      className="fixed inset-0 z-20 flex items-center justify-center bg-ink/30 p-6"
+      className="fixed inset-0 z-20 flex items-center justify-center bg-black/40 p-6"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onCancel()
       }}
@@ -295,7 +290,7 @@ export function NewPollDialog({
           <button
             type="submit"
             disabled={problems.length > 0 || submitting}
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent-strong disabled:opacity-40"
+            className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-bright hover:bg-accent-strong disabled:opacity-40"
           >
             {submitting ? 'Sending…' : 'Send invites'}
           </button>

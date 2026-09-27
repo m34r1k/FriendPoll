@@ -123,7 +123,7 @@ export function ChatPanel({
                     </div>
                   ) : (
                     <div
-                      className={`whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-sm ${mine ? 'rounded-tr-sm bg-accent text-white' : 'rounded-tl-sm bg-sunken'}`}
+                      className={`whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-sm ${mine ? 'rounded-tr-sm bg-accent text-on-bright' : 'rounded-tl-sm bg-sunken'}`}
                     >
                       {message.content}
                     </div>

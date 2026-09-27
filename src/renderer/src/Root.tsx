@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { AuthScreen } from './components/AuthScreen'
 import { DemoApp } from './DemoApp'
 import { supabase } from './lib/supabase'
+import { SettingsProvider } from './lib/useSettings'
 import { RealApp } from './RealApp'
 
 /** Sign-in screen, the real app once signed in, or the fake-data demo. */
@@ -20,10 +21,16 @@ export default function Root() {
     return () => data.subscription.unsubscribe()
   }, [])
 
-  if (demo) return <DemoApp onExit={() => setDemo(false)} />
-  if (!checkedSession) {
-    return <div className="flex h-screen items-center justify-center bg-bg text-sm text-muted">Loading…</div>
+  // Settings sit above everything, so the theme and time zone hold on the
+  // sign-in screen and in the demo too.
+  return <SettingsProvider>{screen()}</SettingsProvider>
+
+  function screen() {
+    if (demo) return <DemoApp onExit={() => setDemo(false)} />
+    if (!checkedSession) {
+      return <div className="flex h-screen items-center justify-center bg-bg text-sm text-muted">Loading…</div>
+    }
+    if (!session) return <AuthScreen onOpenDemo={() => setDemo(true)} />
+    return <RealApp session={session} onOpenDemo={() => setDemo(true)} />
   }
-  if (!session) return <AuthScreen onOpenDemo={() => setDemo(true)} />
-  return <RealApp session={session} onOpenDemo={() => setDemo(true)} />
 }
