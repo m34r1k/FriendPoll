@@ -1,0 +1,466 @@
+================================================================================
+FRIEND_STAT - PROJECT PLAN (draft 6)
+Desktop app: invite friends to a poll, play at the times that work
+Updated 2026-09-15. Invite-based polls, join requests and a notification
+center; demo built. No servers, no channels. ("friend_stat" is a placeholder.)
+================================================================================
+
+--------------------------------------------------------------------------------
+1. THE IDEA
+--------------------------------------------------------------------------------
+A desktop app for friends to figure out when to play together.
+
+Someone creates a poll: a title, the times they are free, and the friends
+they want to play with. Only those friends get the invite. Each invited
+friend marks every time they are free as Yes or Maybe. If they are not free,
+they just leave it blank - there is no "No".
+
+Every time where enough people said Yes becomes a session. The creator
+decides how many people is enough (e.g. 5 for a Valorant 5-stack) and always
+counts as one of them, because they already said they are free at every time
+they listed. Each poll has its own small chat for just the people in it.
+
+Invited friends can suggest someone else. The creator gets a request and
+allows or denies it. A notification center shows what's new across every
+poll, so nothing gets lost when lots of polls are running at once.
+
+Example: Ellis creates "MC tonight?" for 9 PM, 11 PM and 1 AM, needs 2
+people, and invites Avery, Dana, Casey and Jules.
+  Dana: Yes at 9 PM.  Casey: Yes at 11 PM.  Jules: Maybe at 9 PM.
+  Avery: hasn't answered.  Dana suggests Micah -> Ellis gets a request.
+Result:
+  9 PM  - ON  (Ellis, Dana; Jules maybe)
+  11 PM - ON  (Ellis, Casey)
+  1 AM  - needs 1 more
+
+This is deliberately not Discord: no servers, no channels, no public chat
+rooms. The home screen is invites waiting for you and your upcoming sessions.
+
+
+--------------------------------------------------------------------------------
+2. DECISIONS MADE
+--------------------------------------------------------------------------------
+Platform     : Desktop app (Windows first)
+Desktop shell: Electron (no extra installs needed; Tauri would need Rust)
+Backend      : Hosted Supabase, free tier
+
+Structure    : Friends list + polls. No servers, groups or channels.
+Friends      : Added by username; the other person accepts (Phase 1).
+Creating     : Title, times, one length for all times (1h / 2h / 3h),
+               invited friends, and how many people are needed.
+Who is in    : Only the creator and invited friends see a poll, its answers
+               and its chat.
+Adding people: The creator can invite more friends at any time; they're in
+               right away. Anyone else in the poll can SUGGEST one of their
+               friends: the creator gets a request and taps Allow or Deny.
+               The suggested friend hears nothing until it's allowed. The
+               person who suggested hears back either way.
+Poll size    : Max 20 people per poll, creator included. Enforced by the
+               database (Allow is disabled when full).
+Answering    : Per time: Yes or Maybe. Blank = not free. No "No". A friend can
+               mark any number of times. Tapping your answer again clears it.
+Creator      : Automatically in for every time they listed. Does not answer.
+People needed: Set by the creator, counts the creator. Minimum 2. Default 2.
+Sessions     : A time is ON when (creator + Yes answers) >= people needed.
+               Every time is judged on its own - there is no single winner.
+Overlap      : Someone who said Yes to several times is in all of them.
+Maybe        : Shown, never counts toward people needed.
+Visibility   : Everyone in a poll sees everyone's answers.
+Ignoring     : No Decline button. An unanswered invite stays in "Invites for
+               you" until the poll closes. The creator sees "Not answered yet".
+Editing      : Times can't be changed after sending (Phase 5).
+Closing      : A poll closes when its last time ends. Answers and join
+               requests lock; the chat stays usable; it moves to "Past".
+
+Notifications: A bell with an unread count opens the notification center:
+               All / Unread tabs, "Mark all as read", and Allow / Deny right
+               on join requests. You get notified when:
+                 - someone invites you (and who suggested you, if anyone)
+                 - someone asks to add a friend to YOUR poll
+                 - the creator allows / denies a friend YOU suggested
+                 - someone answers YOUR poll (a changed answer replaces the
+                   unread one instead of piling up)
+                 - a time you're going to gets enough people (is ON)
+               Opening a poll marks its notifications as read. Home shows
+               "N new" on polls with unread notifications.
+               Chat messages don't create notifications (too noisy); unread
+               chat badges come in Phase 4.
+
+Time zones   : Stored as UTC. Each person sees times in their computer's time
+               zone automatically, and can override it in settings.
+Look         : Light, warm colours. Not Discord's dark grey + blurple.
+App name     : Not decided (placeholder)
+Dev launcher : start-dev.bat - double-click; its window closes with the app
+               and only stays open if something failed.
+
+AI features  : (1) Poll from a sentence - "MC this weekend evenings with
+               Dana and Jules" fills in the New poll form. The creator checks
+               it and presses Send.
+               (2) Catch me up - summary of a poll chat you missed.
+               (3) "For you" in the notification center - see below.
+               AI never decides sessions; that stays plain code.
+AI provider  : Google Gemini via Google AI Studio, free tier (no payment).
+AI key       : Only in a Supabase Edge Function secret. Never in the app,
+               never in .env, never pasted into chat.
+AI privacy   : Catch me up and For you send data to Google. Both are OFF by
+               default. Catch me up: the poll's creator turns it on per poll.
+               For you: each person turns it on for themselves.
+
+"For you" (notification filter):
+  Goal: when lots of polls are happening, put what you're likely to care
+  about first, based on what you've said Yes to before (which friends,
+  which games, which times of day).
+  Rules:
+    - It sorts and groups; it never deletes or hides notifications.
+    - Anything that needs you (a new invite, a join request) is never pushed
+      down, whatever the AI thinks.
+    - It runs a few times a day at most, not per notification, so the free
+      Gemini quota lasts.
+  Recommendation: build a plain-code version first (Phase 4) - e.g. "you said
+  Yes to 8 of Ellis's last 10 polls", "you never answer before 6 PM". It's
+  free, instant, private, and may be good enough. Then Gemini (Phase 3b)
+  adds what plain code can't: knowing "MC" and "Minecraft" are the same
+  game, and a short reason like "You usually join Ellis's Minecraft nights".
+
+Considered and rejected:
+  - Discord-style servers + channels (Phase 0 demo). Replaced by invite-based
+    polls: you choose exactly who to play with each time.
+  - Self-hosting on the a home NAS. Friends connect over the internet, so
+    the NAS (which holds personal files) would have to be reachable from
+    outside. Not worth the risk when hosted Supabase is free at this size.
+
+
+--------------------------------------------------------------------------------
+3. STACK
+--------------------------------------------------------------------------------
+Desktop shell : Electron
+UI            : React 19 + TypeScript
+Build tool    : Vite (via electron-vite - handles main/preload/renderer together)
+Styling       : Tailwind CSS
+State         : Zustand (small, no boilerplate) + Supabase realtime subscriptions
+Dates / zones : Built-in Intl API for formatting in any time zone (no library)
+Backend       : Supabase
+                  - Postgres for data
+                  - Supabase Auth for login (email + password to start)
+                  - Realtime for live invites, answers, notifications and chat
+                  - Row Level Security so people only see polls they are in
+                  - Database triggers create notifications, so the app can't
+                    fake or skip them
+Packaging     : electron-builder -> .exe installer for Windows
+AI            : Google Gemini API (AI Studio free tier), called ONLY from a
+                Supabase Edge Function. The function checks the caller is
+                logged in (and in the poll, for Catch me up), and caps
+                requests per user per day so nobody can burn the free quota.
+                Replies are requested as structured JSON and validated.
+
+The SQL schema will live in the repo as migration files that you paste into the
+Supabase SQL editor, so nothing has to be set up by hand-clicking.
+
+Supabase project settings (chosen at project creation):
+  Project ID                      : <your project id>
+  Project URL                     : https://<your-project-id>.supabase.co
+  Publishable key                 : in .env (verified working 2026-09-14)
+  Data API                        : ON  (supabase-js reads/writes through it)
+  Automatically expose new tables : OFF (every migration must GRANT access to
+                                          the "authenticated" role explicitly,
+                                          table by table and function by function)
+  Automatic RLS                   : ON  (new tables deny everything until the
+                                          migration adds policies)
+  Confirm email                   : recommended OFF for now (Authentication ->
+                                          Sign In / Providers -> Email). The
+                                          built-in email sender only allows a few
+                                          emails per hour. Turn it back on with a
+                                          custom email (SMTP) provider in Phase 4.
+                                          The app handles either setting.
+
+Migrations (supabase/migrations), run in the SQL Editor in order:
+  0001_accounts_friends.sql       : RUN on the project 2026-09-15; sign-up and
+                                    friends confirmed working by the user
+  0002_polls.sql                  : written + tested locally 2026-09-15
+                                    (PGlite, 65 checks); NOT YET RUN on the
+                                    project
+
+
+--------------------------------------------------------------------------------
+4. SCREENS
+--------------------------------------------------------------------------------
+TOP BAR (every screen)
+  [fs] friend_stat          [Demo: view as v] [+ New poll] [bell 3] (A)
+
+HOME
+  +---------------------------------------------------+--------------+
+  |  Invites for you   (1 new)                        |  Friends  5  |
+  |  MC tonight?  [New]  from Ellis, 3 times, 2 on    |  (D) Dana  |
+  |    [Today 9 PM] [Today 11 PM] [Tomorrow 1 AM]     |  (E) Ellis   |
+  |                                                   |  (C) Casey |
+  |  Upcoming                                         |  (M) Micah    |
+  |  +- Tomorrow 2 PM ------+                         |  (J) Jules     |
+  |  | Study session        |                         |              |
+  |  | Micah, Jules and You    |                         |  hover a     |
+  |  +----------------------+                         |  friend ->   |
+  |                                                   |  [Invite]    |
+  |  Your polls                                       |              |
+  |  Valorant 5-stack [1 new] 4 invited  ...  [Open]  |              |
+  |                                                   |              |
+  |  Past                                             |              |
+  |  Among Us?  2 sessions: Fri 7 PM (2), Fri 9 PM (2)|              |
+  +---------------------------------------------------+--------------+
+  - Invites for you: unanswered first. Upcoming: every ON time you are in.
+  - "N new" = unread notifications about that poll.
+
+NOTIFICATION CENTER (drops down from the bell)
+  +- Notifications ------------------- Mark all as read -+
+  |  [All] [Unread (3)]                      [For you]   |
+  |  (D) Dana wants to add Micah to Valorant 5-stack  * |
+  |      20 min ago                                      |
+  |      [Allow] [Deny]                                  |
+  |  (E) Ellis invited you to MC tonight?              * |
+  |      50 min ago                                      |
+  |  (v) Tomorrow 2 PM is on for Study session         * |
+  |  (D) Dana said Yes to Thu 8 PM in Valorant 5-stack |
+  +------------------------------------------------------+
+  - * = unread. Clicking a notification opens its poll.
+  - [For you] is greyed out until Phase 3b.
+
+NEW POLL (a dialog)
+  [ Describe it (AI): "MC this weekend evenings with Dana" ]   (Phase 3b)
+  Title            [ MC tonight?                    ]
+  When are you free?
+                   [+ Today 8 PM] [+ Today 10 PM] [+ Tomorrow 8 PM]
+                   [date] [time] [Add]
+                   (Today 8 PM x) (Today 10 PM x)
+  How long?        [1h] [2h] [3h]
+  Invite friends   [x] Dana  [ ] Ellis  [x] Jules ...
+  People needed    [-] 2 [+]  of 3 people (including you)
+                                         [Cancel] [Send invites]
+
+POLL
+  +-- <- Home -------------------------------------+-- Chat -------------+
+  |  MC tonight?                   Closes in 7h    | Only the 5 people   |
+  |  From Ellis, 4 invited, 2h each, needs 2       | in this poll        |
+  |                                                | [Catch me up] (AI)  |
+  |  Today 9 PM - 11 PM                     ON     |                     |
+  |  (E)(D) Ellis and Dana      Maybe: Jules       | Ellis: new world    |
+  |  [Yes] [Maybe]                                 | Dana: 9 works     |
+  |                                                |                     |
+  |  Not answered yet: Avery                       |                     |
+  |                                                |                     |
+  |  People 5/20              [+ Suggest a friend] |                     |
+  |  (E) Ellis host  (A) You  (D) Dana ...       |                     |
+  |  Waiting for Ellis to allow: Micah              | [ Message        ]  |
+  +------------------------------------------------+---------------------+
+  - The creator sees [+ Invite more] instead, plus "Requests to join" with
+    Allow / Deny, and no Yes / Maybe buttons.
+  - Times are always shown in the viewer's own time zone.
+
+
+--------------------------------------------------------------------------------
+5. DATA MODEL (Supabase / Postgres tables)
+--------------------------------------------------------------------------------
+Every time column is timestamptz, which Postgres stores as UTC. Converting to
+the viewer's zone only happens in the app, at display time.
+
+profiles
+  id            uuid  PK, references auth.users
+  username      text  unique              (how friends find you)
+  display_name  text
+  avatar_url    text  null
+  timezone      text  null                (null = computer's zone)
+  created_at    timestamptz
+
+friendships                  (one row per pair of people)
+  user_low      uuid  -> profiles         (the smaller of the two ids, so a
+  user_high     uuid  -> profiles          pair can only exist once)
+  requested_by  uuid  -> profiles
+  status        text  ('pending' | 'accepted')
+  created_at    timestamptz
+  accepted_at   timestamptz null
+  PK (user_low, user_high)
+
+polls
+  id            uuid  PK
+  creator_id    uuid  -> profiles
+  title         text                      (1-80 characters)
+  min_people    int   default 2           (>= 2, counts the creator)
+  closes_at     timestamptz               (end of the last time)
+  ai_catch_up_enabled  bool default false (creator-only setting)
+  created_at    timestamptz
+
+poll_invitees
+  poll_id       uuid  -> polls
+  user_id       uuid  -> profiles
+  invited_at    timestamptz
+  suggested_by  uuid  -> profiles  null   (set when added via a join request)
+  PK (poll_id, user_id)
+
+poll_times
+  id            uuid  PK
+  poll_id       uuid  -> polls
+  starts_at     timestamptz
+  ends_at       timestamptz               (starts_at + the poll's length)
+
+poll_responses               (one row per person per time they marked)
+  time_id       uuid  -> poll_times
+  user_id       uuid  -> profiles
+  answer        text  ('yes' | 'maybe')   (no 'no' - blank means not free)
+  responded_at  timestamptz
+  PK (time_id, user_id)
+
+  Clearing an answer deletes the row. The creator never has rows.
+
+join_requests                (an invitee suggesting one of their friends)
+  id            uuid  PK
+  poll_id       uuid  -> polls
+  requested_by  uuid  -> profiles         (must be in the poll)
+  user_id       uuid  -> profiles         (the friend to add)
+  status        text  ('pending' | 'approved' | 'denied')
+  created_at    timestamptz
+  decided_at    timestamptz null
+  Only one pending request per (poll_id, user_id).
+
+poll_messages                (the poll's chat)
+  id            uuid  PK
+  poll_id       uuid  -> polls
+  author_id     uuid  -> profiles
+  content       text
+  created_at    timestamptz
+  edited_at     timestamptz null
+  deleted_at    timestamptz null          (soft delete)
+
+notifications
+  id              uuid  PK
+  user_id         uuid  -> profiles       (who receives it)
+  kind            text  ('invited' | 'join_request' | 'join_approved' |
+                         'join_denied' | 'answered' | 'session_on')
+  poll_id         uuid  -> polls
+  actor_id        uuid  -> profiles       (who caused it)
+  subject_id      uuid  -> profiles null  (friend to add / who suggested you)
+  time_id         uuid  -> poll_times null
+  answer          text  null
+  join_request_id uuid  -> join_requests null
+  created_at      timestamptz
+  read_at         timestamptz null
+  Written ONLY by database triggers on poll_invitees, join_requests and
+  poll_responses. People can read their own and set read_at; nothing else.
+
+Database functions (the app can't bypass these - RLS blocks direct inserts):
+  create_poll(title, start_times, length, invitee_ids, min_people)
+    Poll + times + invitees in one step. Refuses if an invitee isn't an
+    accepted friend, the poll would exceed 20 people, a time is in the past,
+    there are no times or invitees, or min_people is out of range.
+  invite_more(poll_id, user_id)           creator only; friend; not full
+  request_join(poll_id, user_id)          caller in the poll; user_id is the
+                                          caller's friend; not already in;
+                                          no pending request for them
+  decide_join_request(request_id, allow)  creator only; poll still open;
+                                          allow adds the invitee (if not full)
+
+Who can see / do what (Row Level Security):
+  "In the poll" = the creator or an invitee.
+  - Read a poll, its times, answers, invitees and chat: in the poll.
+  - Read join requests: the creator, and the person who made the request.
+  - Add / change / delete an answer: invitees only, own row, poll still open.
+  - Send a chat message: in the poll.
+  - Read notifications / mark read: only your own.
+  - Change ai_catch_up_enabled: creator only.
+
+Sessions (computed in the app, not stored):
+  going(time) = [creator] + invitees who answered Yes for that time
+  ON when count(going) >= min_people
+  needed = max(0, min_people - count(going))
+  The session_on notification trigger uses the same rule.
+
+Closing (no background job needed):
+  A poll is closed when now() > closes_at. The app compares times when drawing;
+  RLS enforces the lock on the server.
+
+
+--------------------------------------------------------------------------------
+6. HOW LIVE UPDATES WORK
+--------------------------------------------------------------------------------
+Supabase Realtime pushes Postgres changes over a websocket. Subscriptions:
+
+  1. notifications where user_id = me
+     -> the bell count and notification center update immediately
+        (this also covers new invites and join requests)
+  2. poll_responses for the polls I'm in
+     -> when a friend answers, everyone's times and Upcoming update
+  3. poll_invitees / join_requests for the poll I have open
+     -> People list and requests update
+  4. poll_messages for the poll I have open
+     -> chat messages appear instantly
+
+A poll whose last time passes moves to "Past" by itself (the app re-checks the
+clock every 30 seconds), so nobody has to refresh.
+
+
+--------------------------------------------------------------------------------
+7. BUILD PHASES
+--------------------------------------------------------------------------------
+Phase 0 - Skeleton                                   <-- DONE 2026-09-14
+  Discord-style demo. Replaced by Phase 0b.
+
+Phase 0b - Invite-based redesign (demo)              <-- DONE 2026-09-15
+  Home, New poll dialog, poll screen with Yes / Maybe and sessions, poll
+  chat, demo-only "view as" switch.
+
+Phase 0c - Join requests + notification center (demo) <-- DONE 2026-09-15
+  Suggest a friend / invite more, Allow / Deny, bell + notification center,
+  "N new" badges on Home. start-dev.bat closes with the app.
+
+Phase 1 - Accounts + friends                         <-- DONE 2026-09-15
+  Sign up / log in with a username. Send, accept, decline, cancel and remove
+  friend requests. Demo still reachable from the sign-in screen.
+
+Phase 2 - Polls   <-- the actual point of the app    <-- IN PROGRESS
+  Code done 2026-09-15: the demo screens now run on real data (people come
+  from a shared source, so demo and real app use the same screens). Live
+  updates via Supabase Realtime for notifications, answers and invitees,
+  plus a reload every 60 s and on window focus as a safety net. Poll chat
+  shows a "coming next" panel until Phase 3. Waiting on: running 0002 on
+  the project and a real two-account test.
+  Design note: a cleared answer is stored as null instead of deleted,
+  because Realtime sends delete events to every subscriber without
+  checking the privacy rules.
+  create_poll + New poll dialog. Invites arrive live. Answer Yes / Maybe.
+  Sessions. Upcoming. Closing and "Past". invite_more, request_join,
+  decide_join_request. Notifications table + triggers + notification center.
+
+Phase 3 - Poll chat
+  Send and receive messages live. Scrollback with pagination.
+
+Phase 3b - AI features (Gemini)
+  Edge Function holding the Gemini key, with a login check and a per-user
+  daily limit. Poll from a sentence fills the New poll form. Catch me up in
+  the poll chat (creator turns it on). "For you" in the notification center
+  (each person turns it on), built on top of the Phase 4 plain-code ranking
+  if that exists by then.
+
+Phase 4 - Polish
+  Windows desktop notifications for the same events as the notification
+  center; clicking one opens the poll. Unread chat badges. Plain-code "For
+  you" ranking. Settings (time zone override). System tray. Remember window
+  size. Dark mode. Package to a .exe installer.
+
+Phase 5 - Later / maybe
+  Edit or cancel a poll's times
+  Withdraw a join request
+  Recurring polls ("every Friday")
+  Calendar export (.ics) for a session
+  Auto-nudge people who have not answered
+  Real app name + icon
+  Voice chat (genuinely hard - WebRTC plus a TURN server; do not start here)
+
+
+--------------------------------------------------------------------------------
+8. OPEN QUESTIONS
+--------------------------------------------------------------------------------
+Nothing blocks Phase 1.
+
+To check when building Phase 3b (these change often, so not fixed now):
+  - Which Gemini model is free on AI Studio at that point, and its limits
+  - Google's current data-use terms for the free tier (affects whether
+    Catch me up / For you are acceptable for private data)
+
+
+================================================================================
