@@ -1,6 +1,6 @@
 {
   "name": "friendpoll",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": true,
   "description": "Invite friends to a poll and play at the times that work",
   "main": "./out/main/index.js",
@@ -8,7 +8,8 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "start": "electron-vite preview",
-    "typecheck": "tsc --noEmit -p tsconfig.node.json --composite false && tsc --noEmit -p tsconfig.web.json --composite false"
+    "typecheck": "tsc --noEmit -p tsconfig.node.json --composite false && tsc --noEmit -p tsconfig.web.json --composite false",
+    "dist": "npm run build && electron-builder --win"
   },
   "devDependencies": {
     "@supabase/supabase-js": "^2.116.0",
@@ -18,11 +19,43 @@
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^5.2.0",
     "electron": "^44.3.0",
+    "electron-builder": "^26.15.3",
     "electron-vite": "^5.0.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",
     "vite": "^7.3.6"
+  },
+  "build": {
+    "appId": "com.m34r1k.friendpoll",
+    "productName": "FriendPoll",
+    "directories": {
+      "buildResources": "build",
+      "output": "dist"
+    },
+    "files": [
+      "out/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "FriendPoll"
+    }
+  },
+  "author": "m34r1k",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/m34r1k/FriendPoll.git"
   }
 }

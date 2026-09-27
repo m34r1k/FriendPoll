@@ -1,3 +1,7 @@
-// Bridge between the Electron main process and the UI. Phase 0 needs nothing
-// here; later phases add OS features like desktop notifications and the tray.
-export {}
+import { contextBridge, ipcRenderer } from 'electron'
+
+// The only thing the UI can ask the OS for: bring our window to the front,
+// used when someone clicks a desktop notification.
+contextBridge.exposeInMainWorld('desktop', {
+  focusWindow: (): Promise<void> => ipcRenderer.invoke('focus-window')
+})

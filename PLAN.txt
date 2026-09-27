@@ -441,7 +441,13 @@ Phase 3b - AI features (Gemini)
   (each person turns it on), built on top of the Phase 4 plain-code ranking
   if that exists by then.
 
-Phase 4 - Polish
+Phase 4 - Polish                                     <-- PART DONE 2026-09-27
+  Done: Windows desktop notifications for every notification-centre event,
+  and clicking one opens that poll; the window remembers its size and
+  position; only one copy can run at a time; app icon; packaging to an
+  installer with electron-builder (npm run dist).
+  Still to do (4b): system tray, settings screen with time zone override,
+  unread chat badges, plain-code "For you" ranking, dark mode.
   Windows desktop notifications for the same events as the notification
   center; clicking one opens the poll. Unread chat badges. Plain-code "For
   you" ranking. Settings (time zone override). System tray. Remember window

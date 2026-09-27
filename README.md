@@ -31,6 +31,9 @@ single winning time. The creator decides how many people are needed (5 for a
 - **A chat per poll** — just for the people in it, and it stays open after the
   poll closes.
 - **Live** — invites, answers, messages and new people arrive without a refresh.
+- **Desktop notifications** — Windows tells you when you are invited, when
+  someone answers your poll, and when a time turns on. Clicking one opens that
+  poll.
 - **Time zones** — times are stored in UTC and always shown in each person's own
   time zone.
 - **Demo mode** — a button on the sign-in screen opens the whole app with fake
@@ -44,7 +47,8 @@ single winning time. The creator decides how many people are needed (5 for a
 | 2 | Polls, answers, sessions, join requests, notifications | Done |
 | 3 | Chat inside each poll | Done |
 | 3b | AI helpers (poll from a sentence, catch me up, "for you") | Not started |
-| 4 | Desktop notifications, tray, settings, dark mode, installer | Not started |
+| 4 | Desktop notifications, installer | Done |
+| 4b | Tray, settings, dark mode, unread chat badges | Not started |
 
 `PLAN.txt` holds the full design: the data model, the rules, and what each phase
 covers.
@@ -109,10 +113,21 @@ You need [Node.js](https://nodejs.org) 20+ and a free
 ### Building an installer
 
 ```bash
-npm run build
+npm run dist
 ```
 
-Packaging to a `.exe` comes in Phase 4.
+This writes `dist/FriendPoll Setup <version>.exe` (about 110 MB): a normal
+Windows installer that adds a desktop shortcut.
+
+**Sharing it with friends:** upload that file to a
+[release](https://github.com/m34r1k/FriendPoll/releases). The first time
+anyone runs it, Windows SmartScreen says "Windows protected your PC", because
+the app is not code-signed — they click **More info → Run anyway**. A signing
+certificate costs over $100 a year, which is hard to justify for a friend
+group.
+
+Everyone who installs it talks to the same Supabase project, since that
+project's address and publishable key are built into the app.
 
 ## Project layout
 

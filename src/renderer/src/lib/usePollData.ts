@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type {
   Answer,
   AppNotification,
@@ -102,9 +102,12 @@ function toNotification(row: NotificationRow): AppNotification {
  * Everything the signed-in person can see (the database rules decide what
  * that is), reloaded whenever a live update says something changed.
  */
-export function usePollData(userId: string) {
+export function usePollData(userId: string, onNotification?: (notification: AppNotification) => void) {
   const [data, setData] = useState<PollData | null>(null)
   const [error, setError] = useState<string | null>(null)
+  // Kept in a ref so a changing callback doesn't resubscribe the channel.
+  const notifyRef = useRef(onNotification)
+  notifyRef.current = onNotification
 
   const refresh = useCallback(async (): Promise<void> => {
     const [polls, responses, requests, notifications, profiles, friends] = await Promise.all([
@@ -170,7 +173,15 @@ export function usePollData(userId: string) {
 
     const channel = supabase
       .channel(`poll-data-${userId}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, soon)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
+        (payload) => {
+          const row = payload.new as NotificationRow | undefined
+          if (row?.id) notifyRef.current?.(toNotification(row))
+          soon()
+        }
+      )
       .on('postgres_changes', { event: '*', schema: 'public', table: 'poll_responses' }, soon)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'poll_invitees' }, soon)
       .subscribe()

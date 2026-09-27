@@ -9,3 +9,11 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }
+
+// Put there by the preload script (src/preload/index.ts).
+interface Window {
+  desktop?: {
+    /** Brings the app window to the front. */
+    focusWindow: () => Promise<void>
+  }
+}

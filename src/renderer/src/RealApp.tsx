@@ -1,5 +1,5 @@
 import type { Session } from '@supabase/supabase-js'
-import { useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { FriendsPanel } from './components/FriendsPanel'
 import { FriendsScreen } from './components/FriendsScreen'
 import { Home } from './components/Home'
@@ -7,13 +7,14 @@ import { NewPollDialog } from './components/NewPollDialog'
 import { NotificationCenter } from './components/NotificationCenter'
 import { PollScreen } from './components/PollScreen'
 import { TopBar } from './components/TopBar'
+import { notificationText, showDesktopNotification } from './lib/desktopNotifications'
 import { explainError } from './lib/errors'
 import { PeopleProvider, profileOf } from './lib/people'
 import { isInPoll } from './lib/sessions'
 import { supabase } from './lib/supabase'
 import { useChat } from './lib/useChat'
 import { useNow } from './lib/useNow'
-import { usePollData } from './lib/usePollData'
+import { usePollData, type PollData } from './lib/usePollData'
 import type { Answer, AppNotification, PollDraft } from './types'
 
 type Screen = { name: 'home' } | { name: 'poll'; pollId: string } | { name: 'friends' }
@@ -28,7 +29,22 @@ interface Props {
 export function RealApp({ session, onOpenDemo }: Props) {
   const me = session.user.id
   const now = useNow()
-  const { data, error: loadError, refresh, patch } = usePollData(me)
+  // Refs, so the live-update handler always sees the latest values without
+  // resubscribing every render.
+  const dataRef = useRef<PollData | null>(null)
+  const openPollRef = useRef<(pollId: string) => void>(() => {})
+
+  /** Something happened while the app wasn't in front: tell Windows. */
+  const handleNotification = useCallback((notification: AppNotification): void => {
+    const current = dataRef.current
+    const people = { profiles: current?.profiles ?? {}, friends: current?.friends ?? [] }
+    const poll = current?.polls.find((p) => p.id === notification.pollId)
+    const { title, body } = notificationText(notification, poll, people)
+    showDesktopNotification(title, body, () => openPollRef.current(notification.pollId))
+  }, [])
+
+  const { data, error: loadError, refresh, patch } = usePollData(me, handleNotification)
+  dataRef.current = data
   const [screen, setScreen] = useState<Screen>({ name: 'home' })
   // The chat for whichever poll is open (null on the other screens).
   const chat = useChat(screen.name === 'poll' ? screen.pollId : null)
@@ -108,6 +124,8 @@ export function RealApp({ session, onOpenDemo }: Props) {
     setScreen({ name: 'poll', pollId })
     markRead({ pollId })
   }
+  // So a click on a desktop notification opens the right poll.
+  openPollRef.current = openPollScreen
 
   function answer(timeId: string, value: Answer | null): void {
     // Show the answer immediately; the reload afterwards corrects it if the
