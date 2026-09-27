@@ -11,6 +11,7 @@ import { explainError } from './lib/errors'
 import { PeopleProvider, profileOf } from './lib/people'
 import { isInPoll } from './lib/sessions'
 import { supabase } from './lib/supabase'
+import { useChat } from './lib/useChat'
 import { useNow } from './lib/useNow'
 import { usePollData } from './lib/usePollData'
 import type { Answer, AppNotification, PollDraft } from './types'
@@ -29,6 +30,8 @@ export function RealApp({ session, onOpenDemo }: Props) {
   const now = useNow()
   const { data, error: loadError, refresh, patch } = usePollData(me)
   const [screen, setScreen] = useState<Screen>({ name: 'home' })
+  // The chat for whichever poll is open (null on the other screens).
+  const chat = useChat(screen.name === 'poll' ? screen.pollId : null)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   /** Friends to pre-tick in the New poll dialog; null while it's closed. */
   const [newPollFor, setNewPollFor] = useState<string[] | null>(null)
@@ -237,6 +240,12 @@ export function RealApp({ session, onOpenDemo }: Props) {
                 void call(() => supabase.rpc('request_join', { p_poll_id: openPoll.id, p_user_id: friendId }))
               }
               onDecide={decide}
+              messages={chat.messages}
+              onSend={(content) => void chat.send(content)}
+              chatHasMore={chat.hasMore}
+              onLoadOlderMessages={() => void chat.loadOlder()}
+              onDeleteMessage={(messageId) => void chat.remove(messageId)}
+              chatError={chat.error}
             />
           ) : (
             <>

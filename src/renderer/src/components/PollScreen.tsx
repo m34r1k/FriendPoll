@@ -19,9 +19,13 @@ interface Props {
   onInviteMore: (friendId: string) => void
   onRequestJoin: (friendId: string) => void
   onDecide: (requestId: string, allow: boolean) => void
-  /** Poll chat. Leave both out to show that chat is coming later. */
-  messages?: ChatMessage[]
+  /** Poll chat. Leave onSend out to show that chat is coming later. */
+  messages?: ChatMessage[] | null
   onSend?: (content: string) => void
+  chatHasMore?: boolean
+  onLoadOlderMessages?: () => void
+  onDeleteMessage?: (messageId: string) => void
+  chatError?: string | null
 }
 
 export function PollScreen({
@@ -36,7 +40,11 @@ export function PollScreen({
   onRequestJoin,
   onDecide,
   messages,
-  onSend
+  onSend,
+  chatHasMore,
+  onLoadOlderMessages,
+  onDeleteMessage,
+  chatError
 }: Props) {
   const people = usePeople()
   const archived = isArchived(poll, now)
@@ -107,13 +115,17 @@ export function PollScreen({
         </div>
       </main>
 
-      {messages && onSend ? (
+      {onSend ? (
         <ChatPanel
-          messages={messages}
+          messages={messages ?? null}
           peopleCount={poll.inviteeIds.length + 1}
           viewerId={viewerId}
           now={now}
           onSend={onSend}
+          hasMore={chatHasMore}
+          onLoadOlder={onLoadOlderMessages}
+          onDelete={onDeleteMessage}
+          error={chatError}
         />
       ) : (
         <aside className="flex w-80 shrink-0 flex-col items-center justify-center gap-1 border-l border-line bg-surface px-8 text-center">

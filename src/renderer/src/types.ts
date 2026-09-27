@@ -44,6 +44,8 @@ export interface ChatMessage {
   authorId: string
   content: string
   createdAt: Date
+  /** Set once the author deleted it; the text is replaced too. */
+  deletedAt?: Date | null
 }
 
 export type JoinRequestStatus = 'pending' | 'approved' | 'denied'

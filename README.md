@@ -28,7 +28,9 @@ single winning time. The creator decides how many people are needed (5 for a
   the creator allows or denies it.
 - **Notification centre** — one place to see new invites, requests, answers and
   times that just turned on, with unread counts per poll.
-- **Live** — invites, answers and new people arrive without a refresh.
+- **A chat per poll** — just for the people in it, and it stays open after the
+  poll closes.
+- **Live** — invites, answers, messages and new people arrive without a refresh.
 - **Time zones** — times are stored in UTC and always shown in each person's own
   time zone.
 - **Demo mode** — a button on the sign-in screen opens the whole app with fake
@@ -40,7 +42,7 @@ single winning time. The creator decides how many people are needed (5 for a
 | --- | --- | --- |
 | 1 | Accounts, usernames, friend requests | Done |
 | 2 | Polls, answers, sessions, join requests, notifications | Done |
-| 3 | Chat inside each poll | Not started |
+| 3 | Chat inside each poll | Done |
 | 3b | AI helpers (poll from a sentence, catch me up, "for you") | Not started |
 | 4 | Desktop notifications, tray, settings, dark mode, installer | Not started |
 
@@ -72,6 +74,7 @@ You need [Node.js](https://nodejs.org) 20+ and a free
 
    - `0001_accounts_friends.sql`
    - `0002_polls.sql`
+   - `0003_poll_chat.sql`
 
 3. **Turn off email confirmation** while testing (optional but recommended):
    **Authentication → Sign In / Providers → Email → Confirm email**. Supabase's

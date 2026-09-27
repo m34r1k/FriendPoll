@@ -176,6 +176,9 @@ Supabase project settings (chosen at project creation):
 Migrations (supabase/migrations), run in the SQL Editor in order:
   0001_accounts_friends.sql       : RUN on the project 2026-09-15; sign-up and
                                     friends confirmed working by the user
+  0003_poll_chat.sql              : written + tested locally 2026-09-27
+                                    (PGlite, 15 checks); NOT YET RUN on the
+                                    project
   0002_polls.sql                  : written + tested locally 2026-09-15
                                     (PGlite, 65 checks); NOT YET RUN on the
                                     project
@@ -426,8 +429,10 @@ Phase 2 - Polls   <-- the actual point of the app    <-- IN PROGRESS
   Sessions. Upcoming. Closing and "Past". invite_more, request_join,
   decide_join_request. Notifications table + triggers + notification center.
 
-Phase 3 - Poll chat
-  Send and receive messages live. Scrollback with pagination.
+Phase 3 - Poll chat                                  <-- DONE 2026-09-27
+  Send, receive and delete your own messages, live. Newest 50 with a load
+  older button. Chat stays open after a poll closes. Waiting on: running
+  0003 on the project.
 
 Phase 3b - AI features (Gemini)
   Edge Function holding the Gemini key, with a login check and a per-user
