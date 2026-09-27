@@ -81,6 +81,11 @@ You need [Node.js](https://nodejs.org) 20+ and a free
    built-in email sender only allows a few messages per hour, which a group
    signing up at once will hit.
 
+   **For "Forgot password" to work**, the reset email has to contain a code:
+   go to **Authentication → Emails → Reset Password** and put `{{ .Token }}`
+   in the template. The app asks for that 6-digit code, because a reset *link*
+   cannot open a desktop app.
+
 4. **Add your project's details.** Copy `.env.example` to `.env` and fill in the
    two values from **Project Settings → API Keys**:
 
