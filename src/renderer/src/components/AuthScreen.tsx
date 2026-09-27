@@ -101,8 +101,8 @@ export function AuthScreen({ onOpenDemo }: { onOpenDemo: () => void }) {
       <div className="flex min-h-full items-center justify-center p-6">
         <div className="w-full max-w-sm">
           <div className="mb-6 flex items-center justify-center gap-2 text-xl font-bold tracking-tight">
-            <span className="flex size-9 items-center justify-center rounded-lg bg-accent text-sm text-white">fs</span>
-            friend_stat
+            <span className="flex size-9 items-center justify-center rounded-lg bg-accent text-sm text-white">FP</span>
+            FriendPoll
           </div>
 
           <div className="rounded-2xl border border-line bg-surface p-6 shadow-sm">

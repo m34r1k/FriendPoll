@@ -1,8 +1,8 @@
 {
-  "name": "friend-stat",
+  "name": "friendpoll",
   "version": "0.0.1",
   "private": true,
-  "description": "Desktop chat app with availability polls",
+  "description": "Invite friends to a poll and play at the times that work",
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",

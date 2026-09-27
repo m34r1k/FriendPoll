@@ -38,8 +38,8 @@ export function TopBar({
   return (
     <header className="flex h-14 shrink-0 items-center gap-3 border-b border-line bg-surface px-5">
       <button type="button" onClick={onHome} className="flex items-center gap-2 font-bold tracking-tight">
-        <span className="flex size-8 items-center justify-center rounded-lg bg-accent text-sm text-white">fs</span>
-        friend_stat
+        <span className="flex size-8 items-center justify-center rounded-lg bg-accent text-sm text-white">FP</span>
+        FriendPoll
       </button>
 
       <div className="ml-auto flex items-center gap-3">

@@ -10,7 +10,7 @@ function createWindow(): void {
     show: false,
     backgroundColor: '#f6f3ee',
     autoHideMenuBar: true,
-    title: 'friend_stat',
+    title: 'FriendPoll',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,

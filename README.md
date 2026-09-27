@@ -1,4 +1,4 @@
-# friend_stat
+# FriendPoll
 
 A desktop app for working out when friends are actually free.
 

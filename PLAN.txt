@@ -1,8 +1,8 @@
 ================================================================================
-FRIEND_STAT - PROJECT PLAN (draft 6)
+FRIENDPOLL - PROJECT PLAN (draft 6)
 Desktop app: invite friends to a poll, play at the times that work
 Updated 2026-09-15. Invite-based polls, join requests and a notification
-center; demo built. No servers, no channels. ("friend_stat" is a placeholder.)
+center; demo built. No servers, no channels. (Name: FriendPoll.)
 ================================================================================
 
 --------------------------------------------------------------------------------
@@ -89,7 +89,7 @@ Notifications: A bell with an unread count opens the notification center:
 Time zones   : Stored as UTC. Each person sees times in their computer's time
                zone automatically, and can override it in settings.
 Look         : Light, warm colours. Not Discord's dark grey + blurple.
-App name     : Not decided (placeholder)
+App name     : FriendPoll (github.com/m34r1k/FriendPoll)
 Dev launcher : start-dev.bat - double-click; its window closes with the app
                and only stays open if something failed.
 
@@ -185,7 +185,7 @@ Migrations (supabase/migrations), run in the SQL Editor in order:
 4. SCREENS
 --------------------------------------------------------------------------------
 TOP BAR (every screen)
-  [fs] friend_stat          [Demo: view as v] [+ New poll] [bell 3] (A)
+  [fs] FriendPoll          [Demo: view as v] [+ New poll] [bell 3] (A)
 
 HOME
   +---------------------------------------------------+--------------+
