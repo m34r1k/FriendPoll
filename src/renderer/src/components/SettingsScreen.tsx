@@ -14,10 +14,12 @@ export function SettingsScreen({ onBack }: { onBack: () => void }) {
   const { settings, update, timeZone } = useSettings()
   const now = useNow(1000)
   const [version, setVersion] = useState<string | null>(null)
+  const [hasTray, setHasTray] = useState(false)
   const desktop = window.desktop
 
   useEffect(() => {
     void desktop?.appVersion().then(setVersion)
+    void desktop?.hasTray().then(setHasTray)
   }, [desktop])
 
   return (
@@ -79,7 +81,7 @@ export function SettingsScreen({ onBack }: { onBack: () => void }) {
             label="Show Windows notifications"
             hint="For invites, answers and times turning on - only while the app isn't the window you're looking at."
           />
-          {desktop && (
+          {hasTray && (
             <Toggle
               checked={settings.keepInTray}
               onChange={(on) => update({ keepInTray: on })}

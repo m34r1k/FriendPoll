@@ -17,5 +17,7 @@ contextBridge.exposeInMainWorld('desktop', {
     ipcRenderer.invoke('set-preferences', preferences),
   /** Unread total, for the tray icon's tooltip and menu. */
   setUnread: (count: number): Promise<void> => ipcRenderer.invoke('set-unread', count),
+  /** False when the app is running from source, where there is no tray. */
+  hasTray: (): Promise<boolean> => ipcRenderer.invoke('has-tray'),
   appVersion: (): Promise<string> => ipcRenderer.invoke('app-version')
 })

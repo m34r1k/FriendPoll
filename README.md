@@ -34,8 +34,10 @@ single winning time. The creator decides how many people are needed (5 for a
 - **Desktop notifications** — Windows tells you when you are invited, when
   someone answers your poll, and when a time turns on. Clicking one opens that
   poll.
-- **Stays in the tray** — closing the window leaves FriendPoll by the clock, so
-  invites still reach you. Quit from its menu, or turn that off in Settings.
+- **Stays in the tray** — in the installed app, closing the window leaves
+  FriendPoll by the clock, so invites still reach you. Quit from its menu, or
+  turn that off in Settings. Running from source there is no tray, so closing
+  the window ends the run and its terminal window.
 - **Unread chat badges** — Home marks the polls whose chat has messages you
   haven't read.
 - **"For you"** — a tab in the notification centre that puts what most likely

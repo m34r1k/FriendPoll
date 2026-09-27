@@ -22,6 +22,7 @@ interface Window {
       keepInTray: boolean
     }) => Promise<void>
     setUnread: (count: number) => Promise<void>
+    hasTray: () => Promise<boolean>
     appVersion: () => Promise<string>
   }
 }

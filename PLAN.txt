@@ -448,8 +448,11 @@ Phase 4 - Polish                                          <-- DONE 2026-09-27
   electron-builder (npm run dist).
 
 Phase 4b - Polish, part two                               <-- DONE 2026-09-27
-  System tray: closing the window hides the app there so notifications keep
-  arriving, and the tooltip carries the unread count. Settings screen (per
+  System tray: closing the window hides the installed app there so
+  notifications keep arriving, and the tooltip carries the unread count. Only
+  the installed app has one - from source, closing quits, so start-dev.bat's
+  terminal window still closes with it (FRIENDPOLL_TRAY=1 to try the tray
+  there anyway). Settings screen (per
   computer, in local storage): theme, time zone override, notifications on or
   off, and whether to keep running in the tray. Dark mode - the same warm
   colours turned down, following Windows unless told otherwise. Unread chat

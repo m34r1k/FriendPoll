@@ -21,6 +21,13 @@ interface WindowState {
 const DEFAULT_STATE: WindowState = { width: 1280, height: 800 }
 const stateFile = (): string => join(app.getPath('userData'), 'window-state.json')
 
+/**
+ * The tray belongs to the installed app. A dev run lives in a terminal window
+ * that only closes when the app does, so hiding to the tray there would leave
+ * that terminal sitting open. Set FRIENDPOLL_TRAY=1 to try the tray from source.
+ */
+const trayWanted = (): boolean => app.isPackaged || process.env['FRIENDPOLL_TRAY'] === '1'
+
 /** True while the app is meant to close for good, not hide to the tray. */
 let quitting = false
 let tray: Tray | null = null
@@ -159,6 +166,7 @@ function refreshTray(): void {
 }
 
 function createTray(): void {
+  if (!trayWanted()) return
   // build/tray.png ships next to the app; see extraResources in package.json.
   const icon = app.isPackaged
     ? join(process.resourcesPath, 'tray.png')
@@ -203,6 +211,9 @@ ipcMain.handle('set-unread', (_event, count: unknown) => {
 })
 
 ipcMain.handle('app-version', () => app.getVersion())
+
+// Settings only offers the tray option when there is a tray to talk about.
+ipcMain.handle('has-tray', () => tray !== null)
 
 // Two copies would fight over the same saved window position.
 if (!app.requestSingleInstanceLock()) {
